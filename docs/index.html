@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NCTM CellLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #F2F2F7;
+  --bg2:      #FFFFFF;
+  --bg3:      #E5E5EA;
+  --card:     #FFFFFF;
+  --card2:    #F2F2F7;
+  --border:   rgba(0,0,0,.08);
+  --border2:  rgba(0,0,0,.14);
+  --txt1:     #1C1C1E;
+  --txt2:     #636366;
+  --txt3:     #AEAEB2;
+
+  --p:        #5856D6;   /* indigo */
+  --pl:       rgba(88,86,214,.1);
+  --g:        #34C759;   /* green */
+  --gl:       rgba(52,199,89,.1);
+  --o:        #FF9500;   /* orange */
+  --ol:       rgba(255,149,0,.1);
+  --r:        #FF3B30;   /* red */
+  --rl:       rgba(255,59,48,.1);
+  --b:        #007AFF;   /* blue */
+  --bl:       rgba(0,122,255,.1);
+  --y:        #FFCC00;
+
+  --rx:22px; --rl2:16px; --rm:12px; --rs:8px;
+  --sh: 0 2px 12px rgba(0,0,0,.08);
+  --sh2: 0 8px 32px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--txt1);min-height:100vh;font-size:14px;line-height:1.5;}
+
+/* NAV */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;
+  background:rgba(242,242,247,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.logo{font-size:20px;font-weight:800;letter-spacing:-.5px;color:var(--p);}
+.logo-sub{font-size:10px;color:var(--txt3);font-weight:500;letter-spacing:.5px;margin-top:-2px;}
+.streak{display:flex;align-items:center;gap:5px;background:var(--ol);border:1px solid rgba(255,149,0,.2);
+  padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:var(--o);}
+
+.botnav{position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(242,242,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom));}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 0;}
+.nb-icon{font-size:22px;}
+.nb-label{font-size:10px;font-weight:600;color:var(--txt3);}
+.nb.active .nb-label{color:var(--p);}
+
+/* SCREENS */
+.screen{display:none;padding:72px 0 90px;min-height:100vh;}
+.screen.active{display:block;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.sh{padding:20px 20px 12px;}
+.sh-title{font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--txt1);}
+.sh-sub{font-size:13px;color:var(--txt3);margin-top:3px;}
+
+/* STEP 카드 */
+.steps{padding:0 16px;display:flex;flex-direction:column;gap:12px;}
+.sc{background:var(--card);border-radius:var(--rl2);box-shadow:var(--sh);overflow:hidden;}
+.sc.active{box-shadow:0 0 0 2px var(--p), var(--sh);}
+.sc.done{box-shadow:0 0 0 2px var(--g), var(--sh);}
+
+.sc-hd{display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;user-select:none;}
+.sc-num{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;background:var(--bg3);color:var(--txt2);transition:all .2s;}
+.sc.active .sc-num{background:var(--p);color:#fff;}
+.sc.done .sc-num{background:var(--g);color:#fff;}
+.sc-title{font-size:15px;font-weight:700;flex-shrink:0;color:var(--txt1);}
+.sc-sum{display:flex;gap:5px;flex-wrap:wrap;flex:1;justify-content:flex-end;}
+
+.chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--pl);color:var(--p);white-space:nowrap;}
+.chip.g{background:var(--gl);color:var(--g);}
+.chip.o{background:var(--ol);color:var(--o);}
+.chip.empty{background:var(--bg3);color:var(--txt3);}
+
+.sc-arr{font-size:12px;color:var(--txt3);transition:transform .2s;flex-shrink:0;}
+.sc-arr.open{transform:rotate(180deg);}
+
+.sc-bd{display:none;border-top:1px solid var(--border);padding:16px;}
+.sc-bd.show{display:block;animation:fadeUp .18s ease;}
+
+/* SELECTORS */
+.lv-row{display:flex;gap:8px;}
+.lv-chip{flex:1;padding:11px 8px;border-radius:var(--rm);border:1.5px solid var(--border2);
+  background:var(--bg);font-size:13px;font-weight:600;color:var(--txt2);
+  cursor:pointer;text-align:center;transition:all .15s;}
+.lv-chip.active{background:var(--p);border-color:var(--p);color:#fff;}
+
+.grade-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
+.grade-chip{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border2);
+  background:var(--bg);font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;transition:all .15s;}
+.grade-chip.active{background:var(--b);border-color:var(--b);color:#fff;}
+
+.stu-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.stu-chip{display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:20px;
+  border:1.5px solid var(--border2);background:var(--bg);
+  font-size:13px;font-weight:600;color:var(--txt2);cursor:pointer;transition:all .15s;}
+.stu-chip.active{color:#fff;}
+.stu-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+
+.sem-row{display:flex;gap:8px;flex-wrap:wrap;}
+.sem-chip{padding:11px 20px;border-radius:var(--rm);border:1.5px solid var(--border2);
+  background:var(--bg);font-size:13px;font-weight:600;color:var(--txt2);cursor:pointer;transition:all .15s;}
+.sem-chip.active{background:var(--p);border-color:var(--p);color:#fff;}
+
+/* 단원 */
+.unit-section{margin-bottom:16px;}
+.unit-major{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.unit-mids{display:flex;gap:6px;flex-wrap:wrap;}
+.unit-chip{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border2);
+  background:var(--bg);font-size:12px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;}
+.unit-chip.active{background:var(--g);border-color:var(--g);color:#fff;}
+
+/* 교재 */
+.sc-tabs{display:flex;gap:5px;margin-bottom:12px;}
+.sc-tab{flex:1;padding:9px;border-radius:var(--rs);border:1.5px solid var(--border2);
+  background:var(--bg);font-size:12px;font-weight:700;color:var(--txt2);cursor:pointer;text-align:center;transition:all .15s;}
+.sc-tab.active{background:var(--o);border-color:var(--o);color:#fff;}
+.book-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;}
+.book-chip{padding:10px 5px;border-radius:var(--rs);border:1.5px solid var(--border2);
+  background:var(--bg);font-size:11px;font-weight:500;color:var(--txt2);
+  cursor:pointer;text-align:center;transition:all .15s;line-height:1.35;}
+.book-chip.active{background:var(--o);border-color:var(--o);color:#fff;}
+.book-pub{font-size:9px;opacity:.6;display:block;margin-top:1px;}
+
+/* 섹션 */
+.sec-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.sec-chip{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border2);
+  background:var(--bg);font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;transition:all .15s;}
+.sec-chip.active{background:var(--p);border-color:var(--p);color:#fff;}
+
+/* 입력 */
+.ilabel{font-size:12px;font-weight:600;color:var(--txt2);display:block;margin-bottom:6px;}
+.ifield{width:100%;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--rm);color:var(--txt1);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.ifield:focus{border-color:var(--p);background:#fff;}
+.ifield::placeholder{color:var(--txt3);}
+textarea.ifield{resize:none;min-height:80px;line-height:1.6;}
+.gap{height:12px;}
+
+/* 숫자 박스 */
+.cnt-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.cnt-box{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--rm);padding:14px;text-align:center;}
+.cnt-box input{width:100%;background:none;border:none;color:var(--txt1);font-size:24px;font-weight:800;text-align:center;outline:none;font-family:inherit;}
+.cnt-box input::placeholder{color:var(--txt3);font-size:20px;}
+.cnt-lbl{font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;}
+
+/* 사진 */
+.upbtn{width:100%;padding:20px;border:2px dashed var(--border2);border-radius:var(--rm);
+  background:var(--bg);color:var(--txt3);font-size:13px;cursor:pointer;text-align:center;
+  transition:all .2s;position:relative;}
+.upbtn:hover{border-color:var(--p);color:var(--p);}
+.upbtn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.img-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.img-th{position:relative;width:72px;height:72px;}
+.img-th img{width:100%;height:100%;object-fit:cover;border-radius:var(--rs);}
+.img-rm{position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:var(--r);color:#fff;border:none;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* 저장 버튼 */
+.savebtn{width:100%;padding:16px;background:var(--p);border:none;border-radius:var(--rm);
+  color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:all .15s;letter-spacing:-.2px;box-shadow:0 4px 16px rgba(88,86,214,.3);}
+.savebtn:active{opacity:.9;transform:scale(.99);}
+.savebtn:disabled{background:var(--txt3);box-shadow:none;}
+
+/* FEED */
+.feed{padding:0 16px;display:flex;flex-direction:column;gap:10px;}
+.fcard{background:var(--card);border-radius:var(--rl2);padding:16px;cursor:pointer;
+  box-shadow:var(--sh);transition:box-shadow .15s;}
+.fcard:hover{box-shadow:var(--sh2);}
+.fcard.done{border-left:4px solid var(--g);}
+.fcard.wip{border-left:4px solid var(--o);}
+.ftop{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.fav{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;}
+.fname{font-size:15px;font-weight:700;color:var(--txt1);}
+.fmeta{font-size:11px;color:var(--txt3);margin-top:1px;}
+.fstatus{margin-left:auto;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;}
+.s-done{background:var(--gl);color:var(--g);}
+.s-wip{background:var(--ol);color:var(--o);}
+
+/* 도트 */
+.dots-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+.dot{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;background:var(--bg3);color:var(--txt3);}
+.dot.done{color:#fff;}
+
+/* 프로그레스 */
+.prog-row{display:flex;align-items:center;gap:10px;}
+.prog-bar{flex:1;height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width .6s;}
+.prog-pct{font-size:13px;font-weight:700;min-width:34px;text-align:right;}
+
+/* 학생 화면 */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px;margin-bottom:16px;}
+.stat-box{background:var(--card);border-radius:var(--rl2);padding:16px;box-shadow:var(--sh);}
+.stat-n{font-size:28px;font-weight:800;letter-spacing:-1px;}
+.stat-l{font-size:11px;color:var(--txt3);margin-top:2px;}
+
+.lv-section{margin-bottom:20px;}
+.lv-title{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;padding:0 20px 10px;margin-bottom:2px;}
+.stu-cards{padding:0 16px;display:flex;flex-direction:column;gap:8px;}
+.stu-card{background:var(--card);border-radius:var(--rl2);padding:16px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh);}
+.stu-avl{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#fff;flex-shrink:0;}
+.stu-nm{font-size:16px;font-weight:700;color:var(--txt1);}
+.stu-gr{font-size:11px;color:var(--txt3);margin-top:1px;}
+.stu-badges{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+.stu-b{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+
+/* 모달 */
+.modal-bg{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg2);border-radius:var(--rx) var(--rx) 0 0;
+  padding:20px;width:100%;max-height:85vh;overflow-y:auto;
+  animation:slideUp .28s ease;position:relative;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--bg3);margin:0 auto 16px;}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:16px;letter-spacing:-.5px;color:var(--txt1);}
+.mclose{position:absolute;top:16px;right:16px;background:var(--bg3);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--txt2);font-size:14px;}
+.sec-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.sec-item:last-child{border-bottom:none;}
+.sec-chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all .2s;}
+.sec-chk.done{background:var(--g);border-color:var(--g);color:#fff;}
+
+/* 인증 */
+.cert-card{background:var(--card);border-radius:var(--rl2);padding:16px;box-shadow:var(--sh);margin-bottom:10px;}
+
+/* 알림 */
+#notif{position:fixed;top:70px;left:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.notif{padding:13px 16px;border-radius:var(--rm);font-size:13px;font-weight:600;
+  background:var(--card);border:1px solid var(--border2);
+  animation:slideD .22s ease;box-shadow:var(--sh2);}
+@keyframes slideD{from{transform:translateY(-8px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.notif.success{border-color:rgba(52,199,89,.4);color:var(--g);}
+.notif.error{border-color:rgba(255,59,48,.4);color:var(--r);}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <div class="logo">CellLog</div>
+    <div class="logo-sub">NCTM LEARNING OS</div>
+  </div>
+  <div class="streak" id="streakBadge">🔥 0일</div>
+</header>
+<div id="notif"></div>
+
+<!-- ════ 기록 ════ -->
+<div class="screen active" id="screen-log">
+  <div class="sh">
+    <div class="sh-title">학습 기록</div>
+    <div class="sh-sub">오늘도 한 셀씩 채워나가요 📚</div>
+  </div>
+  <div class="steps">
+
+    <!-- STEP 1 -->
+    <div class="sc active" id="sc1">
+      <div class="sc-hd" onclick="toggleSc(1)">
+        <div class="sc-num" id="sn1">1</div>
+        <div class="sc-title">학생 · 학기</div>
+        <div class="sc-sum" id="ss1"><span class="chip empty">미선택</span></div>
+        <div class="sc-arr open" id="sa1">▾</div>
+      </div>
+      <div class="sc-bd show" id="sb1">
+        <div class="ilabel">수준</div>
+        <div class="lv-row">
+          <div class="lv-chip active" data-lv="초등" onclick="pickLv(this)">초등 🌱</div>
+          <div class="lv-chip" data-lv="중등" onclick="pickLv(this)">중등 📗</div>
+          <div class="lv-chip" data-lv="고등" onclick="pickLv(this)">고등 🎯</div>
+        </div>
+        <div class="gap"></div>
+        <div class="ilabel">학년</div>
+        <div class="grade-row" id="gradeRow"></div>
+        <div class="gap"></div>
+        <div class="ilabel">학생</div>
+        <div class="stu-row" id="stuRow"><span style="font-size:12px;color:var(--txt3)">학년을 먼저 선택해 주세요</span></div>
+        <div class="gap"></div>
+        <div class="ilabel">학기</div>
+        <div class="sem-row">
+          <div class="sem-chip" data-sem="1학기" onclick="pickSem(this)">1학기</div>
+          <div class="sem-chip" data-sem="2학기" onclick="pickSem(this)">2학기</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="sc" id="sc2">
+      <div class="sc-hd" onclick="toggleSc(2)">
+        <div class="sc-num" id="sn2">2</div>
+        <div class="sc-title">단원 · 교재</div>
+        <div class="sc-sum" id="ss2"><span class="chip empty">미선택</span></div>
+        <div class="sc-arr" id="sa2">▾</div>
+      </div>
+      <div class="sc-bd" id="sb2">
+        <div class="ilabel">단원 선택</div>
+        <div id="unitList"><span style="font-size:12px;color:var(--txt3)">학생과 학기를 먼저 선택해 주세요</span></div>
+        <div class="gap"></div>
+        <div class="ilabel">교재</div>
+        <div class="sc-tabs" id="bookSchoolTabs">
+          <div class="sc-tab active" onclick="pickBookSch('elementary',this)">초등</div>
+          <div class="sc-tab" onclick="pickBookSch('middle',this)">중등</div>
+          <div class="sc-tab" onclick="pickBookSch('high',this)">고등</div>
+        </div>
+        <select class="ifield" id="bookGradeSel" onchange="renderBooks()" style="cursor:pointer;margin-bottom:8px"></select>
+        <div class="book-grid" id="bookGrid"></div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="sc" id="sc3">
+      <div class="sc-hd" onclick="toggleSc(3)" style="cursor:default">
+        <div class="sc-num" id="sn3" style="background:var(--p);color:#fff">3</div>
+        <div class="sc-title">기록 입력</div>
+        <span class="chip" id="curSecLabel" style="margin-left:auto">개념공부</span>
+      </div>
+      <div class="sc-bd show" id="sb3">
+        <div class="ilabel">학습 섹션</div>
+        <div class="sec-chips" style="margin-bottom:16px">
+          <div class="sec-chip active" data-sec="concept_study" onclick="pickSec(this)">📖 개념공부</div>
+          <div class="sec-chip" data-sec="concept_test" onclick="pickSec(this)">📋 개념테스트</div>
+          <div class="sec-chip" data-sec="normal_solve" onclick="pickSec(this)">✏️ 일반유형 풀이</div>
+          <div class="sec-chip" data-sec="normal_wrong" onclick="pickSec(this)">❌ 일반유형 오답</div>
+          <div class="sec-chip" data-sec="normal_test" onclick="pickSec(this)">📊 일반유형 테스트</div>
+          <div class="sec-chip" data-sec="advanced_solve" onclick="pickSec(this)">✏️ 심화유형 풀이</div>
+          <div class="sec-chip" data-sec="advanced_wrong" onclick="pickSec(this)">❌ 심화유형 오답</div>
+          <div class="sec-chip" data-sec="advanced_test" onclick="pickSec(this)">📊 심화유형 테스트</div>
+          <div class="sec-chip" data-sec="killer_solve" onclick="pickSec(this)">✏️ 킬러유형 풀이</div>
+          <div class="sec-chip" data-sec="killer_wrong" onclick="pickSec(this)">❌ 킬러유형 오답</div>
+          <div class="sec-chip" data-sec="killer_test" onclick="pickSec(this)">📊 킬러유형 테스트</div>
+          <div class="sec-chip" data-sec="unit_test" onclick="pickSec(this)">🏁 단원평가</div>
+          <div class="sec-chip" data-sec="unit_wrong" onclick="pickSec(this)">🔄 단원오답정리</div>
+        </div>
+
+        <div class="upbtn" onclick="document.getElementById('imgInput').click()">
+          <input type="file" id="imgInput" accept="image/*" multiple onchange="handleImgs(this.files)">
+          <div style="font-size:24px;margin-bottom:6px">📷</div>
+          <div style="font-weight:600;color:var(--txt2)">사진 추가</div>
+          <div style="font-size:11px;margin-top:2px;color:var(--txt3)">교재·노트·풀이 여러 장 가능</div>
+        </div>
+        <div class="img-row" id="imgRow"></div>
+
+        <div id="testFields" style="display:none">
+          <div class="gap"></div>
+          <div class="cnt-row">
+            <div class="cnt-box"><input type="number" id="r_total" placeholder="—" oninput="calcWrong()"><div class="cnt-lbl">총 문제</div></div>
+            <div class="cnt-box"><input type="number" id="r_correct" placeholder="—" oninput="calcWrong()"><div class="cnt-lbl">맞은 문제</div></div>
+          </div>
+          <div class="cnt-row">
+            <div class="cnt-box" style="border-color:rgba(255,59,48,.3)"><input type="number" id="r_wrong" readonly placeholder="—" style="color:var(--r)"><div class="cnt-lbl">틀린 문제</div></div>
+            <div class="cnt-box"><input type="number" id="r_score" placeholder="—"><div class="cnt-lbl">점수</div></div>
+          </div>
+          <div class="ilabel">오답 요약</div>
+          <textarea class="ifield" id="r_wrongSummary" placeholder="어떤 문제를 틀렸는지..." style="min-height:60px"></textarea>
+        </div>
+
+        <div id="solveFields" style="display:none">
+          <div class="gap"></div>
+          <div class="cnt-row">
+            <div class="cnt-box"><input type="number" id="r_solved" placeholder="—"><div class="cnt-lbl">푼 문제</div></div>
+            <div class="cnt-box"><input type="number" id="r_solvedCorrect" placeholder="—"><div class="cnt-lbl">맞은 문제</div></div>
+          </div>
+        </div>
+
+        <div class="gap"></div>
+        <div class="ilabel">제목 (선택)</div>
+        <input class="ifield" id="r_title" placeholder="예: 소인수분해 1회차 개념정리" style="margin-bottom:12px">
+        <div class="ilabel">메모</div>
+        <textarea class="ifield" id="r_desc" placeholder="오늘 공부한 내용, 어려웠던 점..." style="margin-bottom:12px"></textarea>
+        <div class="ilabel">❓ 질문</div>
+        <textarea class="ifield" id="r_question" placeholder="선생님에게 궁금한 것..." style="min-height:60px;margin-bottom:12px"></textarea>
+        <div class="ilabel">💡 나의 약점</div>
+        <textarea class="ifield" id="r_weakness" placeholder="스스로 느낀 약점..." style="min-height:60px;margin-bottom:16px"></textarea>
+        <button class="savebtn" onclick="saveRecord()">🧬 Cell 저장하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 셀 현황 ════ -->
+<div class="screen" id="screen-cells">
+  <div class="sh"><div class="sh-title">셀 현황</div><div class="sh-sub">단원별 학습 진행 상황</div></div>
+  <div style="display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap">
+    <select class="ifield" id="filter_stu" onchange="renderCells()" style="flex:1;padding:10px 12px"></select>
+    <select class="ifield" id="filter_sem" onchange="renderCells()" style="flex:1;padding:10px 12px">
+      <option value="">전체 학기</option><option>1학기</option><option>2학기</option>
+    </select>
+  </div>
+  <div class="feed" id="cellFeed"></div>
+</div>
+
+<!-- ════ 학생 ════ -->
+<div class="screen" id="screen-students">
+  <div class="sh"><div class="sh-title">학생 현황</div><div class="sh-sub">학년별 학습 현황</div></div>
+  <div class="stats-row" id="overallStats"></div>
+  <div id="stuBody"></div>
+</div>
+
+<!-- ════ 인증 ════ -->
+<div class="screen" id="screen-cert">
+  <div class="sh"><div class="sh-title">인증평가</div><div class="sh-sub">모든 셀 완료 학생만 응시 가능 🏆</div></div>
+  <div style="padding:0 16px">
+    <div id="certEligible"></div>
+    <div class="ilabel" style="margin:16px 0 10px">결과 입력</div>
+    <div class="cert-card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><div class="ilabel">학생</div><select class="ifield" id="cert_stu" style="padding:10px 12px"></select></div>
+        <div><div class="ilabel">학기</div><select class="ifield" id="cert_sem" style="padding:10px 12px"><option>1학기</option><option>2학기</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><div class="ilabel">총 문제</div><input type="number" class="ifield" id="cert_total" style="padding:10px 12px"></div>
+        <div><div class="ilabel">맞은 문제</div><input type="number" class="ifield" id="cert_correct" style="padding:10px 12px"></div>
+      </div>
+      <div class="ilabel">메모</div>
+      <textarea class="ifield" id="cert_memo" placeholder="인증평가 결과..." style="min-height:60px;margin-bottom:12px"></textarea>
+      <button class="savebtn" onclick="saveCert()">🏆 인증평가 저장</button>
+    </div>
+    <div class="ilabel" style="margin:16px 0 10px">인증 기록</div>
+    <div id="certHistory"></div>
+  </div>
+</div>
+
+<!-- 바텀 네비 -->
+<nav class="botnav">
+  <button class="nb active" onclick="showScreen('log',this)"><div class="nb-icon">📝</div><div class="nb-label">기록</div></button>
+  <button class="nb" onclick="showScreen('cells',this)"><div class="nb-icon">🧬</div><div class="nb-label">셀 현황</div></button>
+  <button class="nb" onclick="showScreen('students',this)"><div class="nb-icon">👥</div><div class="nb-label">학생</div></button>
+  <button class="nb" onclick="showScreen('cert',this)"><div class="nb-icon">🏆</div><div class="nb-label">인증</div></button>
+</nav>
+
+<!-- 모달 -->
+<div class="modal-bg" id="cellModal">
+  <div class="modal"><div class="modal-handle"></div>
+    <button class="mclose" onclick="document.getElementById('cellModal').classList.remove('open')">✕</button>
+    <div class="modal-title" id="modalTitle"></div><div id="modalBody"></div>
+  </div>
+</div>
+<div class="modal-bg" id="logModal">
+  <div class="modal"><div class="modal-handle"></div>
+    <button class="mclose" onclick="document.getElementById('logModal').classList.remove('open')">✕</button>
+    <div class="modal-title" id="logModalTitle"></div><div id="logModalBody"></div>
+  </div>
+</div>
+
+<script>
+const STU_DATA={
+  초등:{
+    초1:[{id:'e1a',name:'박서준',color:'#5856D6'},{id:'e1b',name:'김지아',color:'#34C759'}],
+    초2:[{id:'e2a',name:'이민서',color:'#FF9500'},{id:'e2b',name:'정수아',color:'#007AFF'}],
+    초3:[{id:'e3a',name:'최하준',color:'#FF3B30'},{id:'e3b',name:'윤채원',color:'#5856D6'}],
+    초4:[{id:'e4a',name:'강민준',color:'#34C759'},{id:'e4b',name:'오서연',color:'#FF9500'}],
+    초5:[{id:'e5a',name:'임지호',color:'#007AFF'}],
+    초6:[{id:'e6a',name:'신수빈',color:'#FF3B30'}],
+  },
+  중등:{
+    중1:[{id:'m1a',name:'최수아',color:'#5856D6'},{id:'m1b',name:'한지민',color:'#FF3B30'}],
+    중2:[{id:'m2a',name:'류준혁',color:'#007AFF'},{id:'m2b',name:'배수지',color:'#34C759'}],
+    중3:[{id:'m3a',name:'고은지',color:'#FF9500'},{id:'m3b',name:'남도현',color:'#5856D6'}],
+  },
+  고등:{
+    고1:[{id:'h1a',name:'박지호',color:'#FF9500'},{id:'h1b',name:'전미래',color:'#007AFF'}],
+    고2:[{id:'h2a',name:'김민준',color:'#5856D6'},{id:'h2b',name:'이서연',color:'#34C759'}],
+    고3:[{id:'h3a',name:'정태양',color:'#FF3B30'},{id:'h3b',name:'송하은',color:'#FF9500'}],
+  },
+};
+function allStus(){const r=[];Object.values(STU_DATA).forEach(g=>Object.values(g).forEach(a=>a.forEach(s=>r.push(s))));return r;}
+function getStu(id){return allStus().find(s=>s.id===id);}
+
+const HIGH_MAP={고1:'공통수학1',고2:'공통수학2',고3:'수학Ⅰ'};
+
+const BOOKS={
+  elementary:{grades:['초1-1','초1-2','초2-1','초2-2','초3-1','초3-2','초4-1','초4-2','초5-1','초5-2','초6-1','초6-2'],books:[{n:'라이트쎈',p:'신사고'},{n:'쎈',p:'신사고'},{n:'최상위 수학',p:'신사고'},{n:'최상위S',p:'디딤돌'},{n:'최상위 수학',p:'디딤돌'}]},
+  middle:{grades:['중1-1','중1-2','중2-1','중2-2','중3-1','중3-2'],books:[{n:'라이트쎈',p:'신사고'},{n:'쎈',p:'신사고'},{n:'일품',p:'좋은책신사고'},{n:'블랙라벨',p:'진학사'},{n:'에이급 수학',p:'에이급'},{n:'고쟁이',p:'이투스'},{n:'수매씽 개념',p:'천재'},{n:'수매씽 유형',p:'천재'},{n:'개념원리',p:'개념원리'},{n:'개념원리 RPM',p:'개념원리'}]},
+  high:{grades:['공통수학1','공통수학2','대수','미적분1','미적분2','기하','확률과통계'],books:[{n:'라이트쎈',p:'신사고'},{n:'쎈',p:'신사고'},{n:'일품',p:'좋은책신사고'},{n:'블랙라벨',p:'진학사'},{n:'기본정석',p:'성문'},{n:'실력정석',p:'성문'},{n:'고쟁이',p:'이투스'},{n:'자이스토리',p:'자이스토리'},{n:'수매씽 개념',p:'천재'},{n:'개념원리',p:'개념원리'},{n:'개념원리 RPM',p:'개념원리'},{n:'마더텅',p:'마더텅'}]}
+};
+
+const SECTIONS=[
+  {k:'concept_study',l:'개념공부',t:'study'},{k:'concept_test',l:'개념테스트',t:'test'},
+  {k:'normal_solve',l:'일반유형 풀이',t:'solve'},{k:'normal_wrong',l:'일반유형 오답',t:'study'},{k:'normal_test',l:'일반유형 테스트',t:'test'},
+  {k:'advanced_solve',l:'심화유형 풀이',t:'solve'},{k:'advanced_wrong',l:'심화유형 오답',t:'study'},{k:'advanced_test',l:'심화유형 테스트',t:'test'},
+  {k:'killer_solve',l:'킬러유형 풀이',t:'solve'},{k:'killer_wrong',l:'킬러유형 오답',t:'study'},{k:'killer_test',l:'킬러유형 테스트',t:'test'},
+  {k:'unit_test',l:'단원평가',t:'test'},{k:'unit_wrong',l:'단원오답정리',t:'study'},
+];
+const COMP_REQ=SECTIONS.map(s=>s.k);
+</script>
+<script>
+const CURRICULUM={
+  "초1_1학기":{"9까지의 수":["1부터 5까지의 수","6부터 9까지의 수","몇째","수의 순서","수의 크기 비교"],"여러가지 모양":["여러 가지 모양 찾기","여러 가지 모양 알아보기","여러 가지 모양 만들기"],"덧셈과 뺄셈":["모으기와 가르기","덧셈","뺄셈","0을 더하거나 빼기"],"비교하기":["길이 비교","무게 비교","넓이 비교"],"50까지의 수":["9 다음 수","11부터 19까지의 수","50까지의 수","수의 순서","두 수의 크기 비교"]},
+  "초1_2학기":{"100까지의 수":["몇십","99까지의 수","수의 순서","두 수의 크기 비교","짝수와 홀수"],"덧셈과 뺄셈 (1)":["받아올림이 없는 덧셈","받아내림이 없는 뺄셈"],"여러가지 모양":["여러 가지 모양 찾기","여러 가지 모양 알아보기"],"덧셈과 뺄셈 (2)":["세 수의 덧셈","세 수의 뺄셈","10이 되는 더하기"],"시계 보기와 규칙 찾기":["시계 보기","규칙 찾기"]},
+  "초2_1학기":{"세 자리 수":["백, 몇백","세 자리 수","뛰어서 세기","수의 크기 비교"],"여러 가지 도형":["원","삼각형과 사각형","오각형과 육각형"],"덧셈과 뺄셈":["덧셈","뺄셈","덧셈과 뺄셈"],"분류하기":["분류 기준","기준에 따라 분류하기","분류하여 세어 보기"],"곱셈":["묶어 세기","몇의 몇 배","곱셈식"]},
+  "초2_2학기":{"네 자리 수":["천, 몇천","네 자리 수","뛰어 세기","수의 크기 비교"],"곱셈구구":["곱셈구구 (1)","곱셈구구 (2)"],"길이 재기":["1m 알기","길이의 합","길이의 차","길이 어림하기"],"시각과 시간":["시각 읽기","시간 알기","달력 알기"],"표와 그래프":["표로 나타내기","그래프로 나타내기"]},
+  "초3_1학기":{"덧셈과 뺄셈":["덧셈","뺄셈","덧셈과 뺄셈"],"평면도형":["선의 종류","각","직각삼각형","직사각형","정사각형"],"나눗셈":["나눗셈 식 알아보기","곱셈과 나눗셈의 관계","나눗셈의 몫 구하기"],"곱셈":["(몇십)×(몇)","올림이 없는 곱셈","올림이 있는 곱셈"],"길이와 시간":["mm 단위","km 단위","길이의 계산","시간의 계산"],"분수와 소수":["분수 알아보기","소수 알아보기","소수의 크기 비교"]},
+  "초3_2학기":{"곱셈":["(세 자리 수)×(한 자리 수)","(몇십몇)×(몇십몇)"],"나눗셈":["나머지가 없는 나눗셈","나머지가 있는 나눗셈","(세 자리 수)÷(한 자리 수)"],"원":["원의 중심, 반지름, 지름","원 그리기"],"분수":["분수로 나타내기","진분수, 가분수, 자연수","대분수"],"들이와 무게":["들이의 단위","무게의 단위"],"자료의 정리":["표 알아보기","그림그래프"]},
+  "초4_1학기":{"큰 수":["만","억","조","수의 크기 비교"],"각도":["각도 알기","각 그리기","삼각형의 세 각의 합","사각형의 네 각의 합"],"곱셈과 나눗셈":["(세 자리 수)×(두 자리 수)","(세 자리 수)÷(두 자리 수)"],"평면도형의 이동":["밀기","뒤집기","돌리기"],"막대그래프":["막대그래프 읽기","막대그래프 그리기"],"규칙 찾기":["수의 배열에서 규칙","도형의 배열에서 규칙"]},
+  "초4_2학기":{"분수의 덧셈과 뺄셈":["진분수의 덧셈","진분수의 뺄셈","대분수의 덧셈","대분수의 뺄셈"],"삼각형":["이등변삼각형","정삼각형","예각삼각형","둔각삼각형"],"소수의 덧셈과 뺄셈":["소수 두 자리 수","소수의 덧셈","소수의 뺄셈"],"사각형":["수직과 수선","평행사변형","마름모"],"꺾은선 그래프":["꺾은선그래프 읽기","꺾은선그래프 그리기"]},
+  "초5_1학기":{"자연수의 혼합계산":["덧셈과 뺄셈이 섞인 식","곱셈과 나눗셈이 있는 식","혼합계산"],"약수와 배수":["약수","배수","최대공약수","최소공배수"],"규칙과 대응":["대응 관계","대응 관계를 식으로"],"약분과 통분":["크기가 같은 분수","약분","통분","분수의 크기 비교"],"분수의 덧셈과 뺄셈":["분모가 다른 진분수의 덧셈","분모가 다른 대분수의 덧셈","분수의 뺄셈"],"다각형의 둘레와 넓이":["정다각형의 둘레","직사각형의 넓이","평행사변형의 넓이","삼각형의 넓이","마름모의 넓이","사다리꼴의 넓이"]},
+  "초5_2학기":{"수의 범위와 어림하기":["이상과 이하","초과와 미만","올림과 버림","반올림"],"분수의 곱셈":["분수와 자연수의 곱셈","단위분수의 곱셈","진분수의 곱셈","대분수의 곱셈"],"합동과 대칭":["합동인 도형","선대칭도형","점대칭도형"],"소수의 곱셈":["(소수)×(자연수)","(소수)×(소수)"],"직육면체":["직육면체","정육면체","겨냥도","전개도"],"평균과 가능성":["평균","일이 일어날 가능성"]},
+  "초6_1학기":{"분수의 나눗셈":["(자연수)÷(자연수)","(분수)÷(자연수)","(대분수)÷(자연수)"],"각기둥과 각뿔":["각기둥","각기둥의 전개도","각뿔"],"소수의 나눗셈":["(소수)÷(자연수)","몫의 소수점","몫을 어림하기"],"비와 비율":["두 수 비교하기","비","비율","백분율"],"여러 가지 그래프":["그림그래프","띠그래프","원그래프"],"직육면체의 부피와 겉넓이":["직육면체의 부피","직육면체의 겉넓이"]},
+  "초6_2학기":{"분수의 나눗셈":["(분수)÷(분수)","(자연수)÷(분수)"],"소수의 나눗셈":["(소수)÷(소수)","(자연수)÷(소수)","몫을 반올림"],"공간과 입체":["쌓기나무","위에서 본 모양","앞에서 본 모양"],"비례식과 비례배분":["비의 성질","비례식","비례배분"],"원의 넓이":["원주율","원주","원의 넓이"],"원기둥, 원뿔, 구":["원기둥","원뿔","구","전개도"]},
+  "중1_1학기":{"소인수분해":["소수와 합성수","소인수분해","약수와 배수","공약수와 최대공약수","공배수와 최소공배수"],"정수와 유리수":["양수와 음수","정수와 유리수","절댓값","수의 대소 관계","유리수의 사칙연산"],"문자와 식":["문자를 사용한 식","식의 값","일차식","일차방정식"],"좌표평면과 그래프":["순서쌍과 좌표","그래프","정비례","반비례"]},
+  "중1_2학기":{"기본 도형":["점, 선, 면","각","위치 관계","평행선의 성질","삼각형의 합동"],"평면도형":["다각형","삼각형의 내각과 외각","원과 부채꼴"],"입체도형":["다면체","회전체","기둥의 겉넓이와 부피","뿔의 겉넓이와 부피"],"통계":["줄기와 잎 그림","도수분포표","히스토그램","상대도수"]},
+  "중2_1학기":{"수와 식":["유리수의 소수 표현","순환소수","지수법칙","단항식의 곱셈과 나눗셈","다항식의 덧셈과 뺄셈"],"부등식":["부등식","일차부등식"],"방정식":["연립일차방정식","연립방정식의 활용"],"함수":["일차함수","일차함수의 그래프","일차함수의 활용"]},
+  "중2_2학기":{"도형의 성질":["이등변삼각형","삼각형의 외심과 내심","평행사변형","여러 가지 사각형"],"도형의 닮음":["닮은 도형","삼각형의 닮음","평행선과 비","피타고라스 정리"],"확률":["경우의 수","확률","확률의 계산"]},
+  "중3_1학기":{"실수와 그 계산":["제곱근","무리수와 실수","제곱근의 사칙연산"],"다항식의 곱셈과 인수분해":["곱셈공식","인수분해"],"이차방정식":["이차방정식","인수분해를 이용한 풀이","근의 공식","판별식"],"이차함수":["이차함수의 그래프","이차함수의 식"]},
+  "중3_2학기":{"삼각비":["삼각비","특수한 각의 삼각비","삼각비의 활용"],"원의 성질":["원의 현","원의 접선","원주각","원에 내접하는 사각형"],"통계":["대푯값","산포도","상관관계"]},
+  "공통수학1":{"다항식":["다항식의 연산","곱셈공식","나머지정리","인수분해"],"방정식과 부등식":["복소수","이차방정식","판별식","근과 계수의 관계"],"도형의 방정식":["두 점 사이의 거리","직선의 방정식","원의 방정식","원과 직선"]},
+  "공통수학2":{"집합과 명제":["집합","명제","충분조건과 필요조건"],"함수":["함수","합성함수","역함수","유리함수"],"순열과 조합":["경우의 수","순열","조합"]},
+  "수학Ⅰ":{"지수함수와 로그함수":["거듭제곱근","지수법칙","로그","지수함수","로그함수"],"삼각함수":["일반각과 호도법","삼각함수","삼각함수의 그래프"]},
+};
+
+let db=JSON.parse(localStorage.getItem('nctm_cl5')||'null')||{logs:[],cells:[],certs:[]};
+function saveDb(){localStorage.setItem('nctm_cl5',JSON.stringify(db));updateStreak();}
+let sel={lv:'초등',grade:'',stuId:'',semester:'',major:'',unit:'',bookSchool:'elementary',bookGrade:'',book:'',section:'concept_study'};
+let imgs=[];
+
+function updateStreak(){
+  const dates=[...new Set(db.logs.map(l=>new Date(l.date).toDateString()))];
+  let s=0;for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);if(dates.includes(d.toDateString()))s++;else if(i>0)break;}
+  document.getElementById('streakBadge').textContent=`🔥 ${s}일`;
+}
+
+function showScreen(name,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='cells'){populateStuFilter();renderCells();}
+  if(name==='students')renderStudents();
+  if(name==='cert')renderCert();
+}
+
+function toggleSc(n){
+  const bd=document.getElementById('sb'+n),arr=document.getElementById('sa'+n);
+  const show=bd.classList.contains('show');
+  bd.classList.toggle('show',!show);
+  if(arr)arr.classList.toggle('open',!show);
+}
+function openSc(n){document.getElementById('sb'+n)?.classList.add('show');document.getElementById('sa'+n)?.classList.add('open');}
+function closeSc(n){document.getElementById('sb'+n)?.classList.remove('show');document.getElementById('sa'+n)?.classList.remove('open');}
+function setDone(n){
+  const sc=document.getElementById('sc'+n);
+  sc?.classList.remove('active');sc?.classList.add('done');
+  const sn=document.getElementById('sn'+n);if(sn)sn.textContent='✓';
+}
+
+function pickLv(el){
+  document.querySelectorAll('.lv-chip[data-lv]').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');sel.lv=el.dataset.lv;sel.grade='';sel.stuId='';sel.semester='';
+  renderGradeChips();renderStuChips();updateS1();
+  const map={초등:'elementary',중등:'middle',고등:'high'};
+  pickBookSch(map[sel.lv],document.querySelectorAll('.sc-tab')[['초등','중등','고등'].indexOf(sel.lv)]);
+}
+function renderGradeChips(){
+  document.getElementById('gradeRow').innerHTML=Object.keys(STU_DATA[sel.lv]||{}).map(g=>
+    `<div class="grade-chip ${sel.grade===g?'active':''}" data-g="${g}" onclick="pickGrade(this)">${g}</div>`).join('');
+}
+function pickGrade(el){
+  document.querySelectorAll('.grade-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');sel.grade=el.dataset.g;sel.stuId='';
+  renderStuChips();updateS1();
+}
+function renderStuChips(){
+  const el=document.getElementById('stuRow');
+  const stus=sel.grade?(STU_DATA[sel.lv]?.[sel.grade]||[]):[];
+  if(!stus.length){el.innerHTML=`<span style="font-size:12px;color:var(--txt3)">학년을 먼저 선택해 주세요</span>`;return;}
+  el.innerHTML=stus.map(s=>`
+    <div class="stu-chip ${sel.stuId===s.id?'active':''}" data-id="${s.id}"
+      onclick="pickStu(this,'${s.color}')"
+      style="${sel.stuId===s.id?`background:${s.color};border-color:${s.color}`:`border-color:${s.color}40`}">
+      <div class="stu-av" style="background:${s.color}">${s.name[0]}</div>${s.name}
+    </div>`).join('');
+}
+function pickStu(el,color){
+  document.querySelectorAll('.stu-chip').forEach(c=>{c.classList.remove('active');c.style.background='';c.style.color='';});
+  el.classList.add('active');el.style.background=color;el.style.color='#fff';el.style.borderColor=color;
+  sel.stuId=el.dataset.id;updateS1();
+}
+function pickSem(el){
+  document.querySelectorAll('.sem-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');sel.semester=el.dataset.sem;updateS1();renderUnitList();
+  if(sel.stuId&&sel.semester)setTimeout(()=>{closeSc(1);setDone(1);openSc(2);},350);
+}
+function updateS1(){
+  const el=document.getElementById('ss1');const s=getStu(sel.stuId);
+  if(!sel.stuId){el.innerHTML=`<span class="chip empty">미선택</span>`;return;}
+  el.innerHTML=`<span class="chip">${sel.lv}</span><span class="chip">${sel.grade}</span><span class="chip g">${s?.name||''}</span>${sel.semester?`<span class="chip g">${sel.semester}</span>`:''}`;
+}
+
+function getCurrKey(){
+  if(sel.lv==='고등')return HIGH_MAP[sel.grade]||'공통수학1';
+  return sel.grade&&sel.semester?`${sel.grade}_${sel.semester}`:null;
+}
+function renderUnitList(){
+  const el=document.getElementById('unitList');
+  const key=getCurrKey();
+  if(!key){el.innerHTML=`<span style="font-size:12px;color:var(--txt3)">학생과 학기를 먼저 선택해 주세요</span>`;return;}
+  const data=CURRICULUM[key];
+  if(!data){el.innerHTML=`<span style="font-size:12px;color:var(--txt3)">단원 데이터가 없습니다</span>`;return;}
+  el.innerHTML=Object.entries(data).map(([major,mids])=>`
+    <div class="unit-section">
+      <div class="unit-major">${major}</div>
+      <div class="unit-mids">${mids.map(mid=>`
+        <div class="unit-chip ${sel.unit===mid&&sel.major===major?'active':''}"
+          onclick="pickUnit('${major.replace(/'/g,"\\'")}','${mid.replace(/'/g,"\\'")}',event)">${mid}</div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function pickUnit(major,mid,event){
+  sel.major=major;sel.unit=mid;
+  document.querySelectorAll('.unit-chip').forEach(c=>c.classList.remove('active'));
+  event.target.classList.add('active');updateS2();
+}
+function updateS2(){
+  const el=document.getElementById('ss2');
+  if(!sel.unit&&!sel.book){el.innerHTML=`<span class="chip empty">미선택</span>`;return;}
+  el.innerHTML=`${sel.unit?`<span class="chip g">${sel.unit}</span>`:''}${sel.book?`<span class="chip o">${sel.book.split('(')[0]}</span>`:''}`;
+}
+
+let curBookSch='elementary';
+function pickBookSch(sch,el){
+  curBookSch=sch;document.querySelectorAll('.sc-tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');sel.book='';renderBookGrades();renderBooks();updateS2();
+}
+function renderBookGrades(){
+  document.getElementById('bookGradeSel').innerHTML=BOOKS[curBookSch].grades.map(g=>`<option>${g}</option>`).join('');
+}
+function renderBooks(){
+  const grade=document.getElementById('bookGradeSel').value;
+  document.getElementById('bookGrid').innerHTML=BOOKS[curBookSch].books.map(b=>{
+    const k=`${b.n}(${b.p})`;
+    return `<div class="book-chip ${sel.book===k?'active':''}" onclick="pickBook('${k}',this,'${grade}')">
+      ${b.n}<span class="book-pub">${b.p}</span></div>`;
+  }).join('');
+}
+function pickBook(key,el,grade){
+  sel.book=key;sel.bookGrade=grade||document.getElementById('bookGradeSel').value;
+  document.querySelectorAll('.book-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');updateS2();
+  if(sel.unit)setTimeout(()=>{closeSc(2);setDone(2);openSc(3);},350);
+}
+
+function pickSec(el){
+  document.querySelectorAll('.sec-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');sel.section=el.dataset.sec;
+  const sec=SECTIONS.find(s=>s.k===sel.section);
+  document.getElementById('curSecLabel').textContent=sec?.l||'';
+  document.getElementById('testFields').style.display=sec?.t==='test'?'':'none';
+  document.getElementById('solveFields').style.display=sec?.t==='solve'?'':'none';
+}
+
+function handleImgs(files){
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const reader=new FileReader();
+    reader.onload=ev=>{imgs.push(ev.target.result);renderImgs();};
+    reader.readAsDataURL(f);
+  });
+}
+function renderImgs(){
+  document.getElementById('imgRow').innerHTML=imgs.map((src,i)=>
+    `<div class="img-th"><img src="${src}"><button class="img-rm" onclick="rmImg(${i})">✕</button></div>`).join('');
+}
+function rmImg(i){imgs.splice(i,1);renderImgs();}
+function calcWrong(){
+  const t=parseInt(document.getElementById('r_total').value)||0;
+  const c=parseInt(document.getElementById('r_correct').value)||0;
+  document.getElementById('r_wrong').value=Math.max(0,t-c);
+}
+
+function saveRecord(){
+  if(!sel.stuId){notify('학생을 선택해 주세요','error');openSc(1);return;}
+  if(!sel.semester){notify('학기를 선택해 주세요','error');openSc(1);return;}
+  if(!sel.unit){notify('단원을 선택해 주세요','error');openSc(2);return;}
+  if(!sel.book){notify('교재를 선택해 주세요','error');openSc(2);return;}
+  const stu=getStu(sel.stuId);const sec=SECTIONS.find(s=>s.k===sel.section);
+  const bookName=`${sel.bookGrade} ${sel.book.split('(')[0]}`;
+  const log={id:Date.now().toString(),studentId:sel.stuId,studentName:stu?.name||'',
+    grade:sel.grade,lv:sel.lv,semester:sel.semester,major:sel.major,unit:sel.unit,bookName,
+    section:sel.section,sectionLabel:sec?.l||'',
+    title:document.getElementById('r_title').value.trim(),
+    desc:document.getElementById('r_desc').value.trim(),
+    question:document.getElementById('r_question').value.trim(),
+    weakness:document.getElementById('r_weakness').value.trim(),
+    imageUrls:[...imgs],date:new Date().toISOString()};
+  if(sec?.t==='test'){
+    log.totalCount=parseInt(document.getElementById('r_total').value)||0;
+    log.correctCount=parseInt(document.getElementById('r_correct').value)||0;
+    log.wrongCount=parseInt(document.getElementById('r_wrong').value)||0;
+    log.score=parseInt(document.getElementById('r_score').value)||null;
+    log.wrongSummary=document.getElementById('r_wrongSummary').value.trim();
+  }
+  if(sec?.t==='solve'){
+    log.solvedCount=parseInt(document.getElementById('r_solved').value)||0;
+    log.correctCount=parseInt(document.getElementById('r_solvedCorrect').value)||0;
+  }
+  db.logs.unshift(log);updateCell(log);saveDb();
+  imgs=[];renderImgs();
+  ['r_title','r_desc','r_question','r_weakness','r_total','r_correct','r_wrong','r_score','r_wrongSummary','r_solved','r_solvedCorrect'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  notify(`✅ ${stu?.name} · ${sel.unit} · ${sec?.l} 저장됨!`);
+}
+
+function updateCell(log){
+  const ck=`${log.studentId}_${log.semester}_${log.bookName}_${log.unit}`;
+  let cell=db.cells.find(c=>c.ck===ck);
+  if(!cell){cell={ck,id:Date.now().toString(),studentId:log.studentId,studentName:log.studentName,grade:log.grade,lv:log.lv,semester:log.semester,major:log.major,bookName:log.bookName,unit:log.unit,done:[],status:'진행중',created:log.date,updated:log.date};db.cells.push(cell);}
+  if(!cell.done.includes(log.section))cell.done.push(log.section);
+  cell.updated=log.date;
+  cell.status=COMP_REQ.every(s=>cell.done.includes(s))?'완료':'진행중';
+}
+
+function populateStuFilter(){
+  document.getElementById('filter_stu').innerHTML=`<option value="">전체 학생</option>`+allStus().map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+function renderCells(){
+  const fS=document.getElementById('filter_stu')?.value||'';
+  const fSem=document.getElementById('filter_sem')?.value||'';
+  let cells=[...db.cells];
+  if(fS)cells=cells.filter(c=>c.studentId===fS);
+  if(fSem)cells=cells.filter(c=>c.semester===fSem);
+  cells.sort((a,b)=>new Date(b.updated)-new Date(a.updated));
+  const el=document.getElementById('cellFeed');
+  if(!cells.length){el.innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--txt3)"><div style="font-size:48px;margin-bottom:12px">🧬</div><div>아직 셀 기록이 없어요</div></div>`;return;}
+  const secColors={concept:'#5856D6',normal:'#007AFF',advanced:'#FF9500',killer:'#FF3B30',unit:'#34C759'};
+  el.innerHTML=cells.map(cell=>{
+    const stu=getStu(cell.studentId);const color=stu?.color||'#5856D6';
+    const done=cell.done.length;const pct=Math.round((done/COMP_REQ.length)*100);
+    const logs=db.logs.filter(l=>l.studentId===cell.studentId&&l.unit===cell.unit&&l.semester===cell.semester&&l.bookName===cell.bookName);
+    return `<div class="fcard ${cell.status==='완료'?'done':'wip'}" onclick="openCellModal('${cell.ck}')">
+      <div class="ftop">
+        <div class="fav" style="background:${color}">${cell.studentName?.[0]||'?'}</div>
+        <div><div class="fname">${cell.major?`<span style="font-size:11px;color:var(--txt3);font-weight:400">${cell.major} › </span>`:''}${cell.unit}</div>
+        <div class="fmeta">${cell.studentName} · ${cell.bookName} · ${cell.semester}</div></div>
+        <div class="fstatus ${cell.status==='완료'?'s-done':'s-wip'}">${cell.status}</div>
+      </div>
+      <div class="dots-row">${SECTIONS.map(s=>{
+        const d=cell.done.includes(s.k);const grp=s.k.split('_')[0];const c=d?(secColors[grp]||color):'';
+        return `<div class="dot ${d?'done':''}" style="${d?`background:${c}`:''}" title="${s.l}">${d?'✓':'·'}</div>`;
+      }).join('')}</div>
+      <div class="prog-row">
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${pct===100?'var(--g)':color}"></div></div>
+        <div class="prog-pct" style="color:${pct===100?'var(--g)':color}">${pct}%</div>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);margin-top:8px">기록 ${logs.length}건 · ${fmtDate(cell.updated)}</div>
+    </div>`;
+  }).join('');
+}
+
+function openCellModal(ck){
+  const cell=db.cells.find(c=>c.ck===ck);if(!cell)return;
+  const stu=getStu(cell.studentId);const color=stu?.color||'#5856D6';
+  const logs=db.logs.filter(l=>l.studentId===cell.studentId&&l.unit===cell.unit&&l.semester===cell.semester&&l.bookName===cell.bookName);
+  document.getElementById('modalTitle').innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+    <div class="fav" style="background:${color};width:38px;height:38px;border-radius:11px;font-size:16px">${cell.studentName?.[0]}</div>
+    <div><div>${cell.unit}</div><div style="font-size:12px;font-weight:400;color:var(--txt3)">${cell.studentName} · ${cell.bookName}</div></div></div>`;
+  document.getElementById('modalBody').innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0">
+      <span class="chip">${cell.semester}</span>
+      <span class="chip ${cell.status==='완료'?'g':''}">${cell.status}</span>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">섹션 현황</div>
+    ${SECTIONS.map(s=>`
+      <div class="sec-item" onclick="openSecLogs('${ck}','${s.k}','${s.l}')">
+        <div class="sec-chk ${cell.done.includes(s.k)?'done':''}">${cell.done.includes(s.k)?'✓':''}</div>
+        <div style="font-size:14px;font-weight:500;flex:1;color:var(--txt1)">${s.l}</div>
+        <div style="font-size:11px;color:var(--txt3)">${logs.filter(l=>l.section===s.k).length}건 ›</div>
+      </div>`).join('')}`;
+  document.getElementById('cellModal').classList.add('open');
+}
+
+function openSecLogs(ck,secK,secL){
+  const cell=db.cells.find(c=>c.ck===ck);if(!cell)return;
+  const logs=db.logs.filter(l=>l.studentId===cell.studentId&&l.unit===cell.unit&&l.semester===cell.semester&&l.bookName===cell.bookName&&l.section===secK);
+  document.getElementById('logModalTitle').textContent=secL+' 기록';
+  document.getElementById('logModalBody').innerHTML=logs.length===0
+    ?`<div style="text-align:center;padding:30px;color:var(--txt3)">기록이 없습니다</div>`
+    :logs.map(l=>`<div style="background:var(--bg);border-radius:var(--rm);padding:14px;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px">${fmtDate(l.date)}</div>
+      ${l.title?`<div style="font-weight:700;font-size:14px;margin-bottom:4px;color:var(--txt1)">${l.title}</div>`:''}
+      ${l.desc?`<div style="font-size:13px;color:var(--txt2);margin-bottom:8px;line-height:1.6">${l.desc}</div>`:''}
+      ${l.totalCount?`<div style="background:#fff;border-radius:var(--rs);padding:10px;margin-bottom:6px;font-size:13px;color:var(--txt1)">총 ${l.totalCount}문제 · 맞은 ${l.correctCount} · 틀린 ${l.wrongCount}${l.score?` · ${l.score}점`:''}</div>`:''}
+      ${l.question?`<div style="background:var(--bl);border-radius:var(--rs);padding:10px;font-size:12px;color:var(--b);margin-bottom:6px">❓ ${l.question}</div>`:''}
+      ${l.weakness?`<div style="background:var(--ol);border-radius:var(--rs);padding:10px;font-size:12px;color:var(--o)">💡 ${l.weakness}</div>`:''}
+      ${l.imageUrls?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${l.imageUrls.map(src=>`<img src="${src}" style="width:64px;height:64px;object-fit:cover;border-radius:var(--rs)">`).join('')}</div>`:''}
+    </div>`).join('');
+  document.getElementById('cellModal').classList.remove('open');
+  document.getElementById('logModal').classList.add('open');
+}
+
+function renderStudents(){
+  const total=db.cells.length,comp=db.cells.filter(c=>c.status==='완료').length;
+  const tl=db.logs.length,td=db.logs.filter(l=>new Date(l.date).toDateString()===new Date().toDateString()).length;
+  document.getElementById('overallStats').innerHTML=[
+    {n:total,l:'전체 셀',c:'var(--p)'},{n:comp,l:'완료 셀',c:'var(--g)'},
+    {n:tl,l:'전체 기록',c:'var(--b)'},{n:td,l:'오늘 기록',c:'var(--o)'},
+  ].map(s=>`<div class="stat-box"><div class="stat-n" style="color:${s.c}">${s.n}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  document.getElementById('stuBody').innerHTML=Object.entries(STU_DATA).map(([lv,grades])=>`
+    <div class="lv-section">
+      <div class="lv-title">${lv}</div>
+      <div class="stu-cards">${Object.entries(grades).map(([grade,stus])=>stus.map(stu=>{
+        const cells=db.cells.filter(c=>c.studentId===stu.id);
+        const done=cells.filter(c=>c.status==='완료').length;
+        const wip=cells.filter(c=>c.status==='진행중').length;
+        const canCert=[...new Set(cells.map(c=>c.semester))].some(sem=>{
+          const sc=cells.filter(c=>c.semester===sem);return sc.length>0&&sc.every(c=>c.status==='완료');
+        });
+        return `<div class="stu-card">
+          <div class="stu-avl" style="background:${stu.color}">${stu.name[0]}</div>
+          <div style="flex:1">
+            <div class="stu-nm">${stu.name}</div><div class="stu-gr">${grade}</div>
+            <div class="stu-badges">
+              <span class="stu-b" style="background:var(--gl);color:var(--g)">완료 ${done}</span>
+              <span class="stu-b" style="background:var(--ol);color:var(--o)">진행 ${wip}</span>
+              ${canCert?`<span class="stu-b" style="background:rgba(255,204,0,.15);color:#B8860B">🏆 인증가능</span>`:''}
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:24px;font-weight:800;color:${stu.color};letter-spacing:-1px">${cells.length}</div>
+            <div style="font-size:10px;color:var(--txt3)">셀</div>
+          </div>
+        </div>`;
+      }).join('')).join('')}</div>
+    </div>`).join('');
+}
+
+function renderCert(){
+  const stus=allStus();
+  document.getElementById('cert_stu').innerHTML=stus.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const eligible=[];
+  stus.forEach(stu=>{
+    const sems=[...new Set(db.cells.filter(c=>c.studentId===stu.id).map(c=>c.semester))];
+    sems.forEach(sem=>{
+      const sc=db.cells.filter(c=>c.studentId===stu.id&&c.semester===sem);
+      if(sc.length>0&&sc.every(c=>c.status==='완료'))eligible.push({stu,sem,cert:db.certs.find(c=>c.studentId===stu.id&&c.semester===sem)});
+    });
+  });
+  document.getElementById('certEligible').innerHTML=eligible.length===0
+    ?`<div style="text-align:center;padding:30px;color:var(--txt3);font-size:13px">모든 셀을 완료한 학생이 없습니다</div>`
+    :eligible.map(e=>`
+      <div class="cert-card" style="${!e.cert?'border-left:4px solid var(--g)':''}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="fav" style="background:${e.stu.color};width:42px;height:42px;border-radius:13px">${e.stu.name[0]}</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:15px;color:var(--txt1)">${e.stu.name}</div><div style="font-size:12px;color:var(--txt3)">${e.sem}</div></div>
+          ${e.cert?`<span class="chip g">🏆 완료</span>`:`<span style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;background:rgba(255,204,0,.15);color:#B8860B">응시 가능</span>`}
+        </div>
+      </div>`).join('');
+  document.getElementById('certHistory').innerHTML=db.certs.length===0
+    ?`<div style="text-align:center;padding:20px;color:var(--txt3);font-size:13px">기록이 없습니다</div>`
+    :db.certs.map(c=>{
+      const stu=getStu(c.studentId);const rate=c.total>0?Math.round((c.correct/c.total)*100):0;
+      return `<div class="cert-card" style="display:flex;align-items:center;gap:10px">
+        <div class="fav" style="background:${stu?.color||'#5856D6'};width:40px;height:40px;border-radius:12px;font-size:16px">${stu?.name?.[0]||'?'}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--txt1)">${stu?.name} · ${c.semester}</div>
+        <div style="font-size:12px;color:var(--txt2)">${c.correct}/${c.total} · ${rate}%${c.memo?` · ${c.memo}`:''}</div></div>
+        <div style="font-size:22px;font-weight:800;color:${rate>=90?'var(--g)':rate>=70?'var(--b)':'var(--o)'};">${rate}%</div>
+      </div>`;
+    }).join('');
+}
+function saveCert(){
+  db.certs.unshift({id:Date.now().toString(),studentId:document.getElementById('cert_stu').value,
+    semester:document.getElementById('cert_sem').value,
+    total:parseInt(document.getElementById('cert_total').value)||0,
+    correct:parseInt(document.getElementById('cert_correct').value)||0,
+    memo:document.getElementById('cert_memo').value.trim(),date:new Date().toISOString()});
+  saveDb();renderCert();notify('🏆 인증평가 저장됨!');
+}
+
+function fmtDate(iso){if(!iso)return'';const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function notify(msg,type='success'){
+  const el=document.createElement('div');el.className=`notif ${type}`;el.textContent=msg;
+  document.getElementById('notif').appendChild(el);setTimeout(()=>el.remove(),3000);
+}
+
+pickLv(document.querySelector('.lv-chip[data-lv]'));
+renderBookGrades();renderBooks();updateStreak();
+</script>
+</body>
+</html>
